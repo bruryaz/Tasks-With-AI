@@ -45,14 +45,18 @@ def agent(query: str):
         parameters = instruction.get("parameters", {})
 
         if function_name == "add_task":
+            print("Adding task:", parameters)
             task_obj = Task(**parameters)
             result = todo_services.add_task(task_obj)
         elif function_name == "update_task":
+            print("Updating task:", parameters)
             task_obj = Task(**parameters)
             result = todo_services.update_task(task_obj)
         elif function_name == "delete_task":
+            print("Deleting task:", parameters)
             result = todo_services.delete_task(parameters.get("id"))
         elif function_name == "get_tasks":
+            print("Getting tasks")
             result = todo_services.get_tasks()
         else:
             result = f"פונקציה לא מוכרת: {function_name}"
@@ -90,5 +94,7 @@ def agent(query: str):
         messages=final_prompt,
         temperature=0.7
     )
+
+    print("Current tasks after add_task:", todo_services.get_tasks())
 
     return final_completion.choices[0].message.content
