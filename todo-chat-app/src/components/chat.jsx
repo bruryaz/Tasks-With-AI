@@ -1,106 +1,190 @@
-import { useState, useEffect, useRef } from "react";
-import { Send, Bot, User, CheckCircle, Clock, Zap, MessageCircle, Brain, Sparkles } from "lucide-react";
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import {
+  Send,
+  Bot,
+  User,
+  CheckCircle,
+  Clock,
+  MessageCircle,
+  Brain,
+  Sparkles,
+  Calendar,
+  Tag,
+  FileText,
+  Play,
+  Pause,
+  X,
+  AlertCircle,
+} from "lucide-react"
 
 export default function ChatApp() {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState("")
   const [messages, setMessages] = useState([
-    { role: "bot", content: "שלום! אני כאן לעזור לך לנהל משימות. מה תרצה לעשות היום?", timestamp: new Date() }
-  ]);
-  const [tasks, setTasks] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const [backgroundEffect, setBackgroundEffect] = useState(0);
-  const messagesEndRef = useRef(null);
+    { role: "bot", content: "שלום! אני כאן לעזור לך לנהל משימות. מה תרצה לעשות היום?", timestamp: new Date() },
+  ])
+  const [tasks, setTasks] = useState([])
+  const [isTyping, setIsTyping] = useState(false)
+  const [backgroundEffect, setBackgroundEffect] = useState(0)
+  const messagesEndRef = useRef(null)
+
+  const getTaskIcon = (status) => {
+    switch (status) {
+      case 1:
+        return <CheckCircle className="w-5 h-5 text-green-400" />
+      case 2:
+        return <Play className="w-5 h-5 text-blue-400" />
+      case 3:
+        return <X className="w-5 h-5 text-red-400" />
+      case 4:
+        return <Pause className="w-5 h-5 text-orange-400" />
+      default:
+        return <Clock className="w-5 h-5 text-gray-400" />
+    }
+  }
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 1:
+        return "הושלמה"
+      case 2:
+        return "בביצוע"
+      case 3:
+        return "בוטלה"
+      case 4:
+        return "מושהית"
+      default:
+        return "ממתינה"
+    }
+  }
+
+  const getTaskBorderColor = (status) => {
+    switch (status) {
+      case 1:
+        return "border-green-500/50 bg-green-500/10"
+      case 2:
+        return "border-blue-500/50 bg-blue-500/10"
+      case 3:
+        return "border-red-500/50 bg-red-500/10"
+      case 4:
+        return "border-orange-500/50 bg-orange-500/10"
+      default:
+        return "border-gray-500/50 bg-gray-500/10"
+    }
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return null
+    try {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffTime = date - now
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+      const timeStr = date.toLocaleTimeString("he-IL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+
+      if (diffDays === 0) return `היום ${timeStr}`
+      if (diffDays === 1) return `מחר ${timeStr}`
+      if (diffDays === -1) return `אתמול ${timeStr}`
+      if (diffDays > 0 && diffDays <= 7) return `בעוד ${diffDays} ימים ${timeStr}`
+      if (diffDays < 0 && diffDays >= -7) return `לפני ${Math.abs(diffDays)} ימים ${timeStr}`
+
+      return (
+        date.toLocaleDateString("he-IL", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }) + ` ${timeStr}`
+      )
+    } catch (error) {
+      return dateString
+    }
+  }
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setBackgroundEffect(prev => prev + 1);
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
+      setBackgroundEffect((prev) => prev + 1)
+    }, 100)
+    return () => clearInterval(interval)
+  }, [])
 
-  // טעינת משימות מהשרת בזמן הטעינה
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/tasks");
-        const data = await res.json();
-        setTasks(data);
+        const res = await fetch("http://127.0.0.1:8000/tasks")
+        const data = await res.json()
+        setTasks(data)
       } catch (error) {
-        console.error("Error fetching tasks:", error);
+        console.error("Error fetching tasks:", error)
       }
-    };
-    fetchTasks();
-  }, []);
+    }
+    fetchTasks()
+
+    // Refresh tasks every 30 seconds
+    const interval = setInterval(fetchTasks, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim()) return
 
-    const userMessage = { role: "user", content: input, timestamp: new Date() };
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
-    setIsTyping(true);
+    const userMessage = { role: "user", content: input, timestamp: new Date() }
+    setMessages((prev) => [...prev, userMessage])
+    setInput("")
+    setIsTyping(true)
 
     try {
       const res = await fetch("http://127.0.0.1:8000/manage-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: input }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
       const botMessage = {
         role: "bot",
         content: data.response || "מצטער, משהו השתבש בבקשה.",
         timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, botMessage]);
-
-      // עדכון משימות אקראי (או אפשר לעדכן לפי תגובת השרת)
-      if (Math.random() > 0.5) {
-        const newTask = {
-          title: input.slice(0, 20) + "...",
-          description: "משימה חדשה שנוצרה מהצ'אט",
-          status: "pending"
-        };
-        setTasks(prev => [...prev, newTask]);
       }
 
+      setMessages((prev) => [...prev, botMessage])
+
+      setTimeout(async () => {
+        try {
+          const res = await fetch("http://127.0.0.1:8000/tasks")
+          const data = await res.json()
+          setTasks(data)
+        } catch (error) {
+          console.error("Error refreshing tasks:", error)
+        }
+      }, 1000)
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error sending message:", error)
       const botMessage = {
         role: "bot",
         content: "לא הצלחתי להתחבר לשרת.",
         timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, botMessage]);
+      }
+      setMessages((prev) => [...prev, botMessage])
     } finally {
-      setIsTyping(false);
+      setIsTyping(false)
     }
-  };
-
-  const getTaskIcon = (status) => {
-    switch (status) {
-      case "completed": return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case "in_progress": return <Clock className="w-4 h-4 text-yellow-400" />;
-      default: return <Zap className="w-4 h-4 text-blue-400" />;
-    }
-  };
-
-  const getTaskBorderColor = (status) => {
-    switch (status) {
-      case "completed": return "border-green-500/50";
-      case "in_progress": return "border-yellow-500/50";
-      default: return "border-blue-500/50";
-    }
-  };
+  }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden relative" dir="rtl">
+    <div
+      className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden relative"
+      dir="rtl"
+    >
       {/* רקע אנימציה */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
@@ -108,7 +192,7 @@ export default function ChatApp() {
           style={{
             left: `${50 + Math.sin(backgroundEffect * 0.02) * 20}%`,
             top: `${50 + Math.cos(backgroundEffect * 0.015) * 15}%`,
-            transform: 'translate(-50%, -50%)'
+            transform: "translate(-50%, -50%)",
           }}
         />
         <div
@@ -116,41 +200,93 @@ export default function ChatApp() {
           style={{
             right: `${30 + Math.sin(backgroundEffect * 0.025) * 10}%`,
             top: `${20 + Math.cos(backgroundEffect * 0.02) * 10}%`,
-            animationDelay: '1s'
+            animationDelay: "1s",
           }}
         />
       </div>
 
-      {/* צד ימין - משימות */}
-      <div className="w-80 bg-black/40 backdrop-blur-xl border-l border-purple-500/30 p-6 relative">
+      <div className="w-96 bg-black/40 backdrop-blur-xl border-l border-purple-500/30 p-6 relative overflow-y-auto">
         <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent pointer-events-none" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
               <MessageCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              משימות פעילות
-            </h3>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                משימות פעילות
+              </h3>
+              <p className="text-sm text-gray-400">סה"כ {tasks.length} משימות</p>
+            </div>
           </div>
+
           <div className="space-y-4">
-            {tasks.map((task, i) => (
-              <div
-                key={i}
-                className={`p-4 bg-gradient-to-r from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-xl border ${getTaskBorderColor(task.status)} 
-                           transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/25
-                           animate-pulse`}
-                style={{ animationDelay: `${i * 0.2}s`, animationDuration: '2s', animationIterationCount: 1 }}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="mt-1">{getTaskIcon(task.status)}</div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-white mb-1">{task.title}</h4>
-                    <p className="text-sm text-gray-300 leading-relaxed">{task.description}</p>
-                  </div>
-                </div>
+            {tasks.length === 0 ? (
+              <div className="text-center py-8">
+                <AlertCircle className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                <p className="text-gray-400">אין משימות כרגע</p>
+                <p className="text-sm text-gray-500">הוסף משימה חדשה בצ'אט</p>
               </div>
-            ))}
+            ) : (
+              tasks.map((task, i) => (
+                <div
+                  key={task.id || i}
+                  className={`p-5 backdrop-blur-sm rounded-xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/25 ${getTaskBorderColor(task.status)}`}
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  {/* Header with status and type */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {getTaskIcon(task.status)}
+                      <span className="text-sm font-medium text-gray-300">{getStatusText(task.status)}</span>
+                    </div>
+                    {task.type && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 rounded-full">
+                        <Tag className="w-3 h-3 text-purple-400" />
+                        <span className="text-xs text-purple-300">{task.type}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <h4 className="font-bold text-white mb-2 text-lg leading-tight">{task.title}</h4>
+
+                  {/* Description */}
+                  {task.description && (
+                    <div className="flex items-start gap-2 mb-3">
+                      <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-gray-300 leading-relaxed">{task.description}</p>
+                    </div>
+                  )}
+
+                  {/* Dates */}
+                  <div className="space-y-2">
+                    {task.date_start && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                        <span className="text-gray-400">התחלה:</span>
+                        <span className="text-blue-300 font-medium">{formatDate(task.date_start)}</span>
+                      </div>
+                    )}
+
+                    {task.date_finish && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="w-4 h-4 text-green-400" />
+                        <span className="text-gray-400">סיום:</span>
+                        <span className="text-green-300 font-medium">{formatDate(task.date_finish)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Task ID for reference */}
+                  {task.id && (
+                    <div className="mt-3 pt-3 border-t border-gray-600/30">
+                      <span className="text-xs text-gray-500">מזהה: {task.id}</span>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -171,7 +307,7 @@ export default function ChatApp() {
               <p className="text-sm text-gray-400">מחובר ומוכן לעזור</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+              <Sparkles className="w-5 h-5 text-yellow-400 animate-spin" style={{ animationDuration: "3s" }} />
               <span className="text-sm text-gray-400">מופעל בבינה מלאכותית</span>
             </div>
           </div>
@@ -186,26 +322,29 @@ export default function ChatApp() {
                 className={`flex ${msg.role === "user" ? "justify-start" : "justify-end"} animate-fadeInUp`}
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <div className={`flex items-start gap-3 max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl ${msg.role === "bot" ? "ml-auto flex-row-reverse" : "flex-row"}`}>
+                <div
+                  className={`flex items-start gap-3 max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl ${msg.role === "bot" ? "ml-auto flex-row-reverse" : "flex-row"}`}
+                >
                   {msg.role === "user" && (
                     <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                       <User className="w-4 h-4 text-white" />
                     </div>
                   )}
                   <div
-                    className={`p-4 rounded-2xl backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-300 ${msg.role === "user"
+                    className={`p-4 rounded-2xl backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                      msg.role === "user"
                         ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-blue-500/25"
                         : "bg-gradient-to-r from-slate-800/90 to-slate-700/90 text-gray-100 shadow-purple-500/25"
-                      }`}
-                    style={{ textAlign: 'right' }}
+                    }`}
+                    style={{ textAlign: "right" }}
                   >
                     <p className="leading-relaxed">{msg.content}</p>
                     <div className="text-xs opacity-70 mt-2">
-                      {msg.timestamp?.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                      {msg.timestamp?.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                   {msg.role === "bot" && (
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                   )}
@@ -219,13 +358,25 @@ export default function ChatApp() {
                   <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                     <Brain className="w-4 h-4 text-white animate-pulse" />
                   </div>
-                  <div className="bg-gradient-to-r from-slate-800/90 to-slate-700/90 p-4 rounded-2xl backdrop-blur-sm shadow-lg" style={{ textAlign: 'right' }}>
+                  <div
+                    className="bg-gradient-to-r from-slate-800/90 to-slate-700/90 p-4 rounded-2xl backdrop-blur-sm shadow-lg"
+                    style={{ textAlign: "right" }}
+                  >
                     <div className="flex items-center gap-2 flex-row-reverse">
                       <span className="text-sm text-gray-400">הבוט חושב...</span>
                       <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div
+                          className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        />
+                        <div
+                          className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <div
+                          className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -248,7 +399,7 @@ export default function ChatApp() {
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                   placeholder="הקלד הודעה... 💭"
                   className="flex-1 bg-transparent px-6 py-3 text-white placeholder-gray-400 outline-none text-lg text-right"
-                  style={{ direction: 'rtl' }}
+                  style={{ direction: "rtl" }}
                   disabled={isTyping}
                 />
                 <button
@@ -265,9 +416,12 @@ export default function ChatApp() {
               </div>
               <div className="mt-3 text-center">
                 <div className="inline-flex items-center gap-2 text-sm text-gray-400">
-                  <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '2s' }} />
+                  <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: "2s" }} />
                   <span>מופעל על ידי בינה מלאכותית מתקדמת</span>
-                  <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
+                  <Sparkles
+                    className="w-4 h-4 animate-spin"
+                    style={{ animationDuration: "2s", animationDirection: "reverse" }}
+                  />
                 </div>
               </div>
             </div>
@@ -292,5 +446,5 @@ export default function ChatApp() {
         div#root { width: 100%; }
       `}</style>
     </div>
-  );
+  )
 }
