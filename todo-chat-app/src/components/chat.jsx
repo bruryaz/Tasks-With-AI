@@ -88,8 +88,12 @@ export default function ChatApp() {
     try {
       const date = new Date(dateString)
       const now = new Date()
-      const diffTime = date - now
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+      // חישוב הפרש בימים לפי תאריך בלבד
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const targetDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      const diffTime = targetDay - today
+      const diffDays = diffTime / (1000 * 60 * 60 * 24)
 
       const timeStr = date.toLocaleTimeString("he-IL", {
         hour: "2-digit",
@@ -352,11 +356,10 @@ export default function ChatApp() {
                     </div>
                   )}
                   <div
-                    className={`p-4 rounded-2xl backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-300 ${
-                      msg.role === "user"
+                    className={`p-4 rounded-2xl backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-300 ${msg.role === "user"
                         ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-blue-500/25"
                         : "bg-gradient-to-r from-slate-800/90 to-slate-700/90 text-gray-100 shadow-purple-500/25"
-                    }`}
+                      }`}
                     style={{ textAlign: "right" }}
                   >
                     <p className="leading-relaxed">{msg.content}</p>
