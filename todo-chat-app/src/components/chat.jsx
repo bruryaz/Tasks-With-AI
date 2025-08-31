@@ -301,13 +301,6 @@ export default function ChatApp() {
                       </div>
                     )}
                   </div>
-
-                  {/* Task ID for reference */}
-                  {task.id && (
-                    <div className="mt-3 pt-3 border-t border-gray-600/30">
-                      <span className="text-xs text-gray-500">מזהה: {task.id}</span>
-                    </div>
-                  )}
                 </div>
               ))
             )}
