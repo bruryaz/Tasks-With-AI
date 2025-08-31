@@ -56,8 +56,17 @@ def agent(query: str):
 
         if function_name == "add_task":
             parameters.pop("id", None)
-            task_obj = Task(**parameters)
-            result = todo_services.add_task(task_obj)
+            required_fields = ["title","description","type","date_start","date_finish","status"]
+            missing_fields = [f for f in required_fields if f not in parameters]
+
+            if missing_fields:
+                result = {
+                    "message": f"חסרים שדות חובה להוספה: {', '.join(missing_fields)}. אנא ספק אותם."
+                }
+            else:
+                task_obj = Task(**parameters)
+                result = todo_services.add_task(task_obj)
+
 
         elif function_name == "update_task":
             task_id = parameters.get("id")
