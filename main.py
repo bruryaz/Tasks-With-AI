@@ -22,6 +22,7 @@ app.add_middleware(
 @app.post('/manage-task')
 async def manage_task(task: TextOfTask):
     response = agent_service.agent(task.text)
+    print("tasks: ", todo_services.get_tasks())
     return {"response": response}
 
 @app.get('/tasks')
