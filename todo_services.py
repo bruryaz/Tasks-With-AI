@@ -1,15 +1,17 @@
 # todo_services.py
 tasks = []
+next_id = 1 
 
 def get_tasks():
     return tasks
 
 def add_task(task):
-    print("Adding task:", task)
+    global next_id
+    task.id = next_id
+    next_id += 1
     tasks.append(task)
-    print("Current tasks after add_task:", tasks)
     return task
-
+    
 def update_task(task):
     for i, t in enumerate(tasks):
         if t.id == task.id:
