@@ -7,15 +7,15 @@ import {
   User,
   CheckCircle,
   Clock,
+  Play,
+  Pause,
+  X,
   MessageCircle,
   Brain,
   Sparkles,
   Calendar,
   Tag,
   FileText,
-  Play,
-  Pause,
-  X,
   AlertCircle,
 } from "lucide-react"
 
@@ -28,6 +28,15 @@ export default function ChatApp() {
   const [isTyping, setIsTyping] = useState(false)
   const [backgroundEffect, setBackgroundEffect] = useState(0)
   const messagesEndRef = useRef(null)
+  const textareaRef = useRef(null)
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = "auto"
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px"
+    }
+  }
 
   const getTaskIcon = (status) => {
     switch (status) {
@@ -117,18 +126,19 @@ export default function ChatApp() {
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/tasks")
-        const data = await res.json()
-        setTasks(data)
-      } catch (error) {
-        console.error("Error fetching tasks:", error)
-      }
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/tasks")
+      const data = await res.json()
+      setTasks(data)
+      console.log("[v0] Tasks updated:", data.length)
+    } catch (error) {
+      console.error("Error fetching tasks:", error)
     }
-    fetchTasks()
+  }
 
+  useEffect(() => {
+    fetchTasks()
     // Refresh tasks every 30 seconds
     const interval = setInterval(fetchTasks, 30000)
     return () => clearInterval(interval)
@@ -142,11 +152,15 @@ export default function ChatApp() {
     setInput("")
     setIsTyping(true)
 
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+    }
+
     try {
       const res = await fetch("http://127.0.0.1:8000/manage-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: input }),
+        body: JSON.stringify({ text: userMessage.content }),
       })
 
       const data = await res.json()
@@ -158,15 +172,9 @@ export default function ChatApp() {
 
       setMessages((prev) => [...prev, botMessage])
 
-      setTimeout(async () => {
-        try {
-          const res = await fetch("http://127.0.0.1:8000/tasks")
-          const data = await res.json()
-          setTasks(data)
-        } catch (error) {
-          console.error("Error refreshing tasks:", error)
-        }
-      }, 1000)
+      setTimeout(() => {
+        fetchTasks()
+      }, 500)
     } catch (error) {
       console.error("Error sending message:", error)
       const botMessage = {
@@ -178,6 +186,18 @@ export default function ChatApp() {
     } finally {
       setIsTyping(false)
     }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value)
+    adjustTextareaHeight()
   }
 
   return (
@@ -326,6 +346,7 @@ export default function ChatApp() {
                   className={`flex items-start gap-3 max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl ${msg.role === "bot" ? "ml-auto flex-row-reverse" : "flex-row"}`}
                 >
                   {msg.role === "user" && (
+                    /* Maintained consistent avatar proportions */
                     <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                       <User className="w-4 h-4 text-white" />
                     </div>
@@ -344,7 +365,8 @@ export default function ChatApp() {
                     </div>
                   </div>
                   {msg.role === "bot" && (
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                    /* Maintained consistent avatar proportions */
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                   )}
@@ -391,16 +413,18 @@ export default function ChatApp() {
         <div className="bg-black/40 backdrop-blur-xl border-t border-purple-500/30 p-6">
           <div className="max-w-4xl mx-auto">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur animate-pulse" />
-              <div className="relative flex items-center gap-4 bg-slate-800/80 backdrop-blur-sm rounded-full p-2 border border-purple-500/30">
-                <input
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur animate-pulse" />
+              <div className="relative flex items-end gap-4 bg-slate-800/80 backdrop-blur-sm rounded-2xl p-2 border border-purple-500/30">
+                <textarea
+                  ref={textareaRef}
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                  placeholder="הקלד הודעה... 💭"
-                  className="flex-1 bg-transparent px-6 py-3 text-white placeholder-gray-400 outline-none text-lg text-right"
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="הקלד הודעה... (Enter לשליחה, Shift+Enter לשורה חדשה) 💭"
+                  className="flex-1 bg-transparent px-6 py-3 text-white placeholder-gray-400 outline-none text-lg text-right resize-none min-h-[48px] max-h-[120px]"
                   style={{ direction: "rtl" }}
                   disabled={isTyping}
+                  rows={1}
                 />
                 <button
                   onClick={sendMessage}
@@ -408,7 +432,7 @@ export default function ChatApp() {
                   className="group relative p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full 
                            hover:from-blue-400 hover:to-purple-500 transition-all duration-300 
                            hover:scale-110 hover:shadow-lg hover:shadow-purple-500/50
-                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex-shrink-0"
                 >
                   <Send className="w-5 h-5 text-white transform group-hover:translate-x-1 transition-transform duration-200" />
                   <div className="absolute inset-0 rounded-full bg-white/20 scale-0 group-active:scale-100 transition-transform duration-200" />

@@ -6,6 +6,7 @@ import todo_services
 from openai import OpenAI
 import os
 from extract_json import extract_json
+from datetime import datetime
 
 load_dotenv()
 
@@ -29,6 +30,7 @@ def agent(query: str):
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "system", "content": f"סיכום השיחה עד כה: {conversation_summary}"},
         {"role": "system", "content": f"מצב המשימות כרגע:\n{tasks_text}"},
+        {"role": "system", "content": f"השעה הנוכחית בפורמט ISO 8601 היא: {datetime.now().isoformat()}"},
         {"role": "user", "content": query}
     ]
 
