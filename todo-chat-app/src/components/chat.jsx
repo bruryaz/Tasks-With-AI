@@ -323,10 +323,6 @@ export default function ChatApp() {
               <h2 className="font-bold text-lg">AI Assistant</h2>
               <p className="text-sm text-gray-400">מחובר ומוכן לעזור</p>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-400 animate-spin" style={{ animationDuration: "3s" }} />
-              <span className="text-sm text-gray-400">מופעל בבינה מלאכותית</span>
-            </div>
           </div>
         </div>
 
@@ -350,8 +346,8 @@ export default function ChatApp() {
                   )}
                   <div
                     className={`p-4 rounded-2xl backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-300 ${msg.role === "user"
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-blue-500/25"
-                        : "bg-gradient-to-r from-slate-800/90 to-slate-700/90 text-gray-100 shadow-purple-500/25"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-blue-500/25"
+                      : "bg-gradient-to-r from-slate-800/90 to-slate-700/90 text-gray-100 shadow-purple-500/25"
                       }`}
                     style={{ textAlign: "right" }}
                   >
@@ -436,13 +432,11 @@ export default function ChatApp() {
               </div>
               <div className="mt-3 text-center">
                 <div className="inline-flex items-center gap-2 text-sm text-gray-400">
-                  <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: "2s" }} />
-                  <span>מופעל על ידי בינה מלאכותית מתקדמת</span>
-                  <Sparkles
-                    className="w-4 h-4 animate-spin"
-                    style={{ animationDuration: "2s", animationDirection: "reverse" }}
-                  />
+                  <Sparkles />
+                  <span>בוט המשימות מנוהל על ידי בינה מלאכותית. פקחו עיניים שהוא לא עושה טעויות!</span>
                 </div>
+                {/* כל הזכויות שמורות */}
+                <div className="text-xs text-gray-400"> .All rights reserved ©</div>
               </div>
             </div>
           </div>
