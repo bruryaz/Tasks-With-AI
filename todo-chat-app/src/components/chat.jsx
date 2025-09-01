@@ -314,14 +314,11 @@ export default function ChatApp() {
         <div className="bg-black/40 backdrop-blur-xl border-b border-purple-500/30 p-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <Bot className="w-6 h-6 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-slate-900 animate-pulse" />
-            </div>
+              <img src="/vite.png" alt="AI Assistant" className="w-10 h-10" />
+               </div>
             <div>
               <h2 className="font-bold text-lg">AI Assistant</h2>
-              <p className="text-sm text-gray-400">מחובר ומוכן לעזור</p>
+              <p className="text-sm text-gray-400">משימות מנוהלות בצ'אט</p>
             </div>
           </div>
         </div>
